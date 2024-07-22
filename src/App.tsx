@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Search, Plus, X, Edit2, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Plus, X, Edit2, Trash2, Maximize2, Minimize2 } from 'lucide-react';
 
 const initialCategories = [
   'Computer science', 'Psychology', 'Machine learning', 'Biology',
@@ -7,21 +7,27 @@ const initialCategories = [
 ];
 
 const initialNoteCards = [
-  { id: 1, color: 'bg-green-200', year: 2024, title: 'VCHAR: Variance-Aware Human Computation framework with Generative Representation', authors: 'Authors names here', category: 'Machine learning' },
-  { id: 2, color: 'bg-yellow-200', year: 2024, title: 'Bridge-like direct programmable amplification of target and donor DNA', authors: 'Authors names here', category: 'Biology' },
-  { id: 3, color: 'bg-yellow-200', year: 2017, title: 'A manifesto for reproducible science', authors: 'Authors names here', category: 'Psychology' },
-  { id: 4, color: 'bg-pink-200', year: 2020, title: 'Endowment effect', authors: 'Authors names here', category: 'Economics' },
-  { id: 5, color: 'bg-pink-200', year: 2019, title: 'The Curious Case of Neural Text Degeneration', authors: 'Authors names here', category: 'Machine learning' },
-  { id: 6, color: 'bg-yellow-200', year: 2007, title: 'The Strength Model of Self Control', authors: 'Authors names here', category: 'Psychology' },
+  { id: 1, color: 'bg-green-200', year: 2024, title: 'VCHAR: Variance-Aware Human Computation framework with Generative Representation', authors: 'Authors names here', category: 'Machine learning', content: 'This is a detailed explanation of the VCHAR framework...' },
+  { id: 2, color: 'bg-yellow-200', year: 2024, title: 'Bridge-like direct programmable amplification of target and donor DNA', authors: 'Authors names here', category: 'Biology', content: 'In this study, we explore a novel method for DNA amplification...' },
+  { id: 3, color: 'bg-yellow-200', year: 2017, title: 'A manifesto for reproducible science', authors: 'Authors names here', category: 'Psychology', content: 'Reproducibility is a cornerstone of scientific progress...' },
+  { id: 4, color: 'bg-pink-200', year: 2020, title: 'Endowment effect', authors: 'Authors names here', category: 'Economics', content: 'The endowment effect is a psychological phenomenon...' },
+  { id: 5, color: 'bg-pink-200', year: 2019, title: 'The Curious Case of Neural Text Degeneration', authors: 'Authors names here', category: 'Machine learning', content: 'This paper examines the problem of neural text degeneration...' },
+  { id: 6, color: 'bg-yellow-200', year: 2007, title: 'The Strength Model of Self Control', authors: 'Authors names here', category: 'Psychology', content: 'Self-control is a critical aspect of human behavior...' },
 ];
 
-const NoteCard = ({ note, onEdit, onDelete }) => (
+const NoteCard = ({ note, onEdit, onDelete, onFullScreen }) => (
   <div className={`${note.color} p-4 rounded-lg shadow-md relative group`}>
     <div className="text-sm text-gray-600">{note.year}</div>
     <h3 className="font-bold mt-1">{note.title}</h3>
     <p className="text-sm mt-2">{note.authors}</p>
     <p className="text-xs mt-2 text-gray-600">{note.category}</p>
+    <div className="mt-2 h-20 overflow-hidden">
+      <p className="text-sm">{note.content.substring(0, 100)}...</p>
+    </div>
     <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+      <button onClick={() => onFullScreen(note)} className="p-1 bg-green-500 text-white rounded-full mr-2 hover:bg-green-600">
+        <Maximize2 size={16} />
+      </button>
       <button onClick={() => onEdit(note)} className="p-1 bg-blue-500 text-white rounded-full mr-2 hover:bg-blue-600">
         <Edit2 size={16} />
       </button>
@@ -32,68 +38,51 @@ const NoteCard = ({ note, onEdit, onDelete }) => (
   </div>
 );
 
-const ItemModal = ({ isOpen, onClose, onSave, item, categories, mode }) => {
-  const [title, setTitle] = useState(item?.title || '');
-  const [authors, setAuthors] = useState(item?.authors || '');
-  const [year, setYear] = useState(item?.year || '');
-  const [category, setCategory] = useState(item?.category || categories[0]);
+const FullScreenNote = ({ note, onClose, onSave }) => {
+  const [editedNote, setEditedNote] = useState(note);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSave({ id: item?.id, title, authors, year: parseInt(year), category });
+  const handleSave = () => {
+    onSave(editedNote);
     onClose();
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-      <div className="bg-white p-6 rounded-lg">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">{mode === 'edit' ? 'Edit Item' : 'Add New Item'}</h2>
-          <button onClick={onClose}><X size={24} /></button>
-        </div>
-        <form onSubmit={handleSubmit}>
-          <input
-            className="w-full mb-2 p-2 border rounded"
-            placeholder="Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-          />
-          <input
-            className="w-full mb-2 p-2 border rounded"
-            placeholder="Authors"
-            value={authors}
-            onChange={(e) => setAuthors(e.target.value)}
-            required
-          />
-          <input
-            className="w-full mb-2 p-2 border rounded"
-            placeholder="Year"
-            type="number"
-            value={year}
-            onChange={(e) => setYear(e.target.value)}
-            required
-          />
-          <select
-            className="w-full mb-4 p-2 border rounded"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            required
-          >
-            {categories.map((cat) => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
-          <button
-            type="submit"
-            className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
-          >
-            {mode === 'edit' ? 'Save Changes' : 'Add Item'}
-          </button>
-        </form>
+    <div className="fixed inset-0 bg-white z-50 p-8 flex flex-col">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-bold">{editedNote.title}</h2>
+        <button onClick={onClose} className="p-2 bg-gray-200 rounded-full hover:bg-gray-300">
+          <Minimize2 size={24} />
+        </button>
       </div>
+      <input
+        className="w-full mb-2 p-2 border rounded text-xl"
+        value={editedNote.title}
+        onChange={(e) => setEditedNote({ ...editedNote, title: e.target.value })}
+      />
+      <div className="flex mb-2">
+        <input
+          className="flex-1 mr-2 p-2 border rounded"
+          value={editedNote.authors}
+          onChange={(e) => setEditedNote({ ...editedNote, authors: e.target.value })}
+        />
+        <input
+          className="w-24 p-2 border rounded"
+          type="number"
+          value={editedNote.year}
+          onChange={(e) => setEditedNote({ ...editedNote, year: parseInt(e.target.value) })}
+        />
+      </div>
+      <textarea
+        className="flex-1 w-full p-2 border rounded mb-4"
+        value={editedNote.content}
+        onChange={(e) => setEditedNote({ ...editedNote, content: e.target.value })}
+      />
+      <button
+        onClick={handleSave}
+        className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+      >
+        Save Changes
+      </button>
     </div>
   );
 };
@@ -141,35 +130,23 @@ const NoteTakingApp = () => {
   const [activeCategory, setActiveCategory] = useState('Recent');
   const [categories, setCategories] = useState(initialCategories);
   const [noteCards, setNoteCards] = useState(initialNoteCards);
-  const [isItemModalOpen, setIsItemModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState('add');
-  const [editingItem, setEditingItem] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingCategory, setEditingCategory] = useState(null);
+  const [fullScreenNote, setFullScreenNote] = useState(null);
 
-  const addOrUpdateItem = (item) => {
-    if (modalMode === 'edit') {
-      setNoteCards(noteCards.map(note => note.id === item.id ? { ...note, ...item } : note));
-    } else {
-      const colorOptions = ['bg-green-200', 'bg-yellow-200', 'bg-pink-200'];
-      const newNoteCard = {
-        id: noteCards.length + 1,
-        color: colorOptions[Math.floor(Math.random() * colorOptions.length)],
-        ...item
-      };
-      setNoteCards([...noteCards, newNoteCard]);
-    }
+  const addOrUpdateNote = (updatedNote) => {
+    setNoteCards(noteCards.map(note =>
+      note.id === updatedNote.id ? { ...note, ...updatedNote } : note
+    ));
   };
 
   const deleteNote = (id) => {
     setNoteCards(noteCards.filter(note => note.id !== id));
   };
 
-  const openEditModal = (note) => {
-    setEditingItem(note);
-    setModalMode('edit');
-    setIsItemModalOpen(true);
+  const openFullScreenNote = (note) => {
+    setFullScreenNote(note);
   };
 
   const addCategory = (newCategory) => {
@@ -206,7 +183,8 @@ const NoteTakingApp = () => {
   const filteredNotes = noteCards.filter(note =>
     (activeCategory === 'Recent' || note.category === activeCategory) &&
     (note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      note.authors.toLowerCase().includes(searchTerm.toLowerCase()))
+      note.authors.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      note.content.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (
@@ -283,7 +261,7 @@ const NoteTakingApp = () => {
             </div>
             <button
               className="bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600"
-              onClick={() => { setModalMode('add'); setEditingItem(null); setIsItemModalOpen(true); }}
+              onClick={() => openFullScreenNote({ id: Date.now(), color: 'bg-green-200', year: new Date().getFullYear(), title: '', authors: '', category: activeCategory, content: '' })}
             >
               <Plus size={20} />
             </button>
@@ -291,19 +269,24 @@ const NoteTakingApp = () => {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredNotes.map((card) => (
-            <NoteCard key={card.id} note={card} onEdit={openEditModal} onDelete={deleteNote} />
+            <NoteCard
+              key={card.id}
+              note={card}
+              onEdit={openFullScreenNote}
+              onDelete={deleteNote}
+              onFullScreen={openFullScreenNote}
+            />
           ))}
         </div>
       </div>
 
-      <ItemModal
-        isOpen={isItemModalOpen}
-        onClose={() => setIsItemModalOpen(false)}
-        onSave={addOrUpdateItem}
-        item={editingItem}
-        categories={categories}
-        mode={modalMode}
-      />
+      {fullScreenNote && (
+        <FullScreenNote
+          note={fullScreenNote}
+          onClose={() => setFullScreenNote(null)}
+          onSave={addOrUpdateNote}
+        />
+      )}
 
       <CategoryModal
         isOpen={isCategoryModalOpen}
